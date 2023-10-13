@@ -1,6 +1,6 @@
 import math
 import polyroot
-import orthopoly
+import ortho
 from typing import Callable
 
 
@@ -14,11 +14,11 @@ def gauss_legendre(f: Callable[[float], float], a: float, b: float, n: int) -> f
         node = math.cos(((2 * k - 1) / 2 * n) * math.pi)
         # find zero of n-degree legendre and append: https://en.wikipedia.org/wiki/Newton%27s_method
         zero = polyroot.NewtonRaphson(
-            orthopoly.legendre(n), orthopoly.legendre_prime(n), node
+            ortho.legendre(n), ortho.legendre_prime(n), node
         )
         zeros.append(zero)
         # calculate associated weight and append
-        weight = 2 / ((1 - zero**2) * orthopoly.legendre_prime(n)(zero) ** 2)
+        weight = 2 / ((1 - zero**2) * ortho.legendre_prime(n)(zero) ** 2)
         weights.append(weight)
         k += 1
     # change interval: https://en.wikipedia.org/wiki/Gaussian_quadrature#Change_of_interval
