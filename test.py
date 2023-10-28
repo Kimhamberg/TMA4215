@@ -1,9 +1,8 @@
 n = 10
+import numpy
+import math
 
-print("normal:")
-for i in range(n-1, -1, -1):
-    print(i)
+x = numpy.arange(1, 7).reshape(2, 3)
 
-print("reversed:")
-for i in reversed(range(n)):
-    print(i)
+print(numpy.sum(x))
+print(math.fsum(x.flat))
