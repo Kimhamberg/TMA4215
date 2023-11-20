@@ -10,7 +10,10 @@ p3_prime: Callable[[float], float] = lambda x: (15 * x**2 - 3) / 2
 p4: Callable[[float], float] = lambda x: (35 * x**4 - 30 * x**2 + 3) / 8
 p4_prime: Callable[[float], float] = lambda x: (140 * x**3 - 60 * x) / 8
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 65d4086dc8457f8d38657a7b594010841a2547ea
 class PolyrootTest(unittest.TestCase):
     def test_legendre(self):
         polynomial_roots = (

@@ -27,6 +27,7 @@ class LinalgTest(unittest.TestCase):
         numpy.testing.assert_allclose(L, numpy.tril(L))
         numpy.testing.assert_allclose(U, numpy.triu(U))
         numpy.testing.assert_allclose(L @ U, A)
+<<<<<<< HEAD
 
     def test_crout(self):
         n = numpy.random.randint(2, 16)
@@ -60,6 +61,25 @@ class LinalgTest(unittest.TestCase):
         b = numpy.asarray([6, 25, -11, 15])
         solution = linalg.gauss_seidel(A, b)
         numpy.testing.assert_array_almost_equal(numpy.dot(A, solution), b)
+=======
+>>>>>>> 65d4086dc8457f8d38657a7b594010841a2547ea
 
+    def test_crout(self):
+        n = numpy.random.randint(2, 16)
+        A = numpy.random.rand(n, n)
+        L, U = linalg.crout(A)
+        numpy.testing.assert_allclose(L, numpy.tril(L))
+        numpy.testing.assert_allclose(U, numpy.triu(U))
+        numpy.testing.assert_allclose(L @ U, A)
+    
+    def test_cholesky(self):
+        n = numpy.random.randint(2, 16)
+        B = numpy.random.rand(n, n)
+        A = B.T @ B
+        L, U = linalg.cholesky(A)
+        numpy.testing.assert_allclose(L, numpy.tril(L))
+        numpy.testing.assert_allclose(U, numpy.triu(U))
+        numpy.testing.assert_allclose(L @ U, A)
+    
 
 unittest.main()
