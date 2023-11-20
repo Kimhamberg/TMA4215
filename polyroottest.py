@@ -10,7 +10,8 @@ p3_prime: Callable[[float], float] = lambda x: (15 * x**2 - 3) / 2
 p4: Callable[[float], float] = lambda x: (35 * x**4 - 30 * x**2 + 3) / 8
 p4_prime: Callable[[float], float] = lambda x: (140 * x**3 - 60 * x) / 8
 
-class PolyRootTest(unittest.TestCase):
+
+class PolyrootTest(unittest.TestCase):
     def test_legendre(self):
         polynomial_roots = (
             (-1 / math.sqrt(3), 1 / math.sqrt(3)),
@@ -31,7 +32,9 @@ class PolyRootTest(unittest.TestCase):
             for expected_root in expected_roots:
                 if round(abs(computed_root - expected_root), 7) == 0:
                     return
-            self.fail(f"{computed_root} not almost equal to any root in {expected_roots}")
+            self.fail(
+                f"{computed_root} not almost equal to any root in {expected_roots}"
+            )
 
 
 unittest.main()

@@ -4,19 +4,194 @@ from numpy.typing import NDArray
 import math
 
 
-def forward_substitution(L: NDArray[float64], b: NDArray[float64]):
+def forward_substitution(l: NDArray[float64], b: NDArray[float64]):
     n = len(b)
     x = numpy.zeros(n)
-    x[0] = b[0] / L[0, 0]
-    for i in range(1, n):
-        x[i] = (b[i] - math.fsum(L[i, j] * x[j] for j in range(i))) / L[i, i]
+    for i in range(n):
+        x[i] = (b[i] - math.fsum(l[i, j] * x[j] for j in range(i))) / l[i, i]
     return x
 
 
-def backward_substitution(U: NDArray[float64], b: NDArray[float64]):
+def backward_substitution(u: NDArray[float64], b: NDArray[float64]):
     n = len(b)
     x = numpy.zeros(n)
-    for i in reversed(range(n - 1)):
-        x[i] = (b[i] - math.fsum(U[i, j] * x[j] for j in range(i + 1, n))) / U[i, i]
-    x[n - 1] = b[n - 1] / U[n - 1, n - 1]
+    for i in reversed(range(n)):
+        x[i] = (b[i] - math.fsum(u[i, j] * x[j] for j in range(i + 1, n))) / u[i, i]
+    return x
+
+
+def doolittle(a: NDArray[float64]):
+    n = a.shape[0]
+    l = numpy.zeros((n, n))
+    u = numpy.zeros((n, n))
+
+    for i in range(n):
+        l[i, i] = 1
+        for j in range(i, n):
+            u[i, j] = a[i, j] - math.fsum(l[i, k] * u[k, j] for k in range(i))
+            if i != j:
+                l[j, i] = (
+                    a[j, i] - math.fsum(l[j, k] * u[k, i] for k in range(j))
+                ) / u[i, i]
+    return l, u
+
+
+def crout(a: NDArray[float64]):
+    n = a.shape[0]
+    l = numpy.zeros((n, n))
+    u = numpy.zeros((n, n))
+
+    for i in range(n):
+        u[i, i] = 1
+        for j in range(i, n):
+            l[j, i] = a[j, i] - math.fsum(l[j, k] * u[k, i] for k in range(i))
+            if i != j:
+                u[i, j] = (
+                    a[i, j] - math.fsum(l[i, k] * u[k, j] for k in range(i))
+                ) / l[i, i]
+    return l, u
+
+
+def cholesky(a: NDArray[float64]):
+    n = a.shape[0]
+    l = numpy.zeros((n, n))
+
+    for i in range(n):
+        for j in range(i + 1):
+            if i == j:
+                l[i, j] = numpy.sqrt(a[i, i] - numpy.sum(l[i, :] ** 2))
+            else:
+                l[i, j] = (a[i, j] - numpy.sum(l[i, :] * l[j, :])) / l[j, j]
+
+    return l, l.T
+
+
+def gram_schmidt_qr(a: NDArray[float64]):
+    m, n = a.shape
+    q = numpy.zeros((m, n))
+    r = numpy.zeros((n, n))
+
+    for j in range(n):
+        v = a[:, j]
+        for i in range(j):
+            r[i, j] = q[:, i] @ a[:, j]
+            v = v - r[i, j] * q[:, i]
+        r[j, j] = numpy.linalg.norm(v)
+        q[:, j] = v / r[j, j]
+
+    return q, r
+
+
+def householder_qr(a: NDArray[float64]):
+    m, n = a.shape
+    r = a.copy()
+    q = numpy.eye(m)
+
+    for j in range(n):
+        x = r[j:, j]
+        e1 = numpy.zeros_like(x)
+        e1[0] = numpy.linalg.norm(x)
+        v = x + numpy.sign(x[0]) * e1
+        v = v / numpy.linalg.norm(v)
+        h = numpy.eye(m)
+        h[j:, j:] -= 2.0 * numpy.outer(v, v)
+        r = h @ r
+        q = q @ h.T
+
+    return q, r
+
+
+def givens_rotation(a, b):
+    r = numpy.hypot(a, b)
+    c = a / r
+    s = -b / r
+
+    return c, s
+
+
+def givens_qr(A: NDArray[float64]):
+    m, n = A.shape
+    r = A.copy()
+    q = numpy.eye(m)
+
+    for j in range(n):
+        for i in range(m - 1, j, -1):
+            c, s = givens_rotation(r[i - 1, j], r[i, j])
+            g = numpy.eye(m)
+            g[i - 1 : i + 1, i - 1 : i + 1] = numpy.array([[c, s], [-s, c]])
+            r = g @ r
+            q = q @ g.T
+
+    return q, r
+
+
+def jacobi(
+    a: NDArray[float64], b: NDArray[float64], tolerance=1e-10, max_iterations=1000
+):
+    x = numpy.zeros_like(b, dtype=numpy.float64)
+    d = numpy.diag(a)
+    r = a - numpy.diagflat(d)
+
+    for _ in range(max_iterations):
+        x_new = (b - r @ x) / d
+        if numpy.linalg.norm(x_new - x, ord=numpy.inf) < tolerance:
+            return x_new
+        x = x_new
+
+    return x
+
+
+def gauss_seidel(
+    a: NDArray[float64], b: NDArray[float64], tolerance=1e-10, max_iterations=1000
+):
+    x = numpy.zeros_like(b, dtype=numpy.float64)
+    for _ in range(max_iterations):
+        x_new = numpy.copy(x)
+        for i in range(a.shape[0]):
+            sum1 = numpy.dot(a[i, :i], x_new[:i])
+            sum2 = numpy.dot(a[i, i + 1 :], x[i + 1 :])
+            x_new[i] = (b[i] - sum1 - sum2) / a[i, i]
+        if numpy.linalg.norm(x_new - x, ord=numpy.inf) < tolerance:
+            return x_new
+        x = x_new
+    return x
+
+
+def jacobi_relaxed(
+    a: NDArray[float64],
+    b: NDArray[float64],
+    omega: float,
+    tolerance=1e-10,
+    max_iterations=1000,
+):
+    x = numpy.zeros_like(b, dtype=numpy.float64)
+    d = numpy.diag(a)
+    r = a - numpy.diagflat(d)
+    for _ in range(max_iterations):
+        x_jacobi = (b - r @ x) / d
+        x_new = omega * x_jacobi + (1 - omega) * x
+        if numpy.linalg.norm(x_new - x, ord=numpy.inf) < tolerance:
+            return x_new
+        x = x_new
+
+    return x
+
+
+def gauss_seidel_relaxed(
+    a: NDArray[float64],
+    b: NDArray[float64],
+    omega: float,
+    tolerance=1e-10,
+    max_iterations=1000,
+):
+    x = numpy.zeros_like(b, dtype=numpy.double)
+    for _ in range(max_iterations):
+        x_new = numpy.copy(x)
+        for i in range(a.shape[0]):
+            sum1 = numpy.dot(a[i, :i], x_new[:i])
+            sum2 = numpy.dot(a[i, i + 1 :], x[i + 1 :])
+            x_new[i] = x[i] + omega * (b[i] - sum1 - sum2) / a[i, i]
+        if numpy.linalg.norm(x_new - x, ord=numpy.inf) < tolerance:
+            return x_new
+        x = x_new
     return x
